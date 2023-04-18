@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="review-drd" name="Review DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Web Modeler" exporterVersion="a158627" camunda:diagramRelationId="2d70d325-6be4-49cc-a0c3-463261cb6b46" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.1.0">
+  <decision id="review_priority" name="Review priority">
+    <decisionTable id="DecisionTable_0bi8dmi" hitPolicy="FIRST">
+      <input id="Input_1" label="Repository">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text>pull_request.repository</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1kfehlh" label="Age">
+        <inputExpression id="LiteralExpression_048jcwg" typeRef="dayTimeDuration">
+          <text>now() - date and time(pull_request.created_at)</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0qswz8s" label="From bot">
+        <inputExpression id="LiteralExpression_1mff3s4" typeRef="boolean">
+          <text>pull_request.is_bot</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Priority" name="review_priority" typeRef="number" />
+      <rule id="DecisionRule_0tdnwb5">
+        <description>Old Zeebe PRs</description>
+        <inputEntry id="UnaryTests_0a98m7m">
+          <text>"camunda/zeebe"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0xqbutu">
+          <text>&gt; @"P3D"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1rnb8zp">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1azmo19">
+          <text>1</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0qgu3p8">
+        <description>Old other PRs</description>
+        <inputEntry id="UnaryTests_105dfgn">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0vzegsq">
+          <text>&gt; @"P7D"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0104vl9">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_00dijfy">
+          <text>2</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1vp3d0j">
+        <description>Newer Zeebe PRs</description>
+        <inputEntry id="UnaryTests_1csw9i7">
+          <text>"camunda/zeebe"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1etiokj">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ffrji7">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_10x8zvz">
+          <text>3</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1vaxzbu">
+        <description>Other Camunda PRs</description>
+        <inputEntry id="UnaryTests_1hdp63c">
+          <text>starts with(?, "camunda/")</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1c8pyxn">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0kdl3zz">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1ekj48c">
+          <text>4</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_09tlq3a">
+        <description>Newer community PRs </description>
+        <inputEntry id="UnaryTests_1y9olwv">
+          <text>starts with(?, "camunda-community-hub")</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ctvqov">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1kqer13">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1xoqi91">
+          <text>5</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1pxrc80">
+        <description>Other PRs </description>
+        <inputEntry id="UnaryTests_0dzk03o">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0tsfq3x">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0gbmfrj">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1rtxixp">
+          <text>6</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0wy0vsm">
+        <description>PRs from bots (e.g. dependabot)</description>
+        <inputEntry id="UnaryTests_0dixqfe">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1138nmq">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1xa4ati">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1iqee20">
+          <text>7</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="review_priority">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

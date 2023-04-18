@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Web Modeler" exporterVersion="3f9a452" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.2.0" camunda:diagramRelationId="7e0332ed-20cd-4541-ae84-e5497921169a">
+  <bpmn:process id="daily-review-process" name="Daily review process" isExecutable="true">
+    <bpmn:intermediateCatchEvent id="Event_0ege2pe" name="08:00">
+      <bpmn:incoming>Flow_1jx7apz</bpmn:incoming>
+      <bpmn:outgoing>Flow_0qw5grx</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_06vbkz5">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=date and time(
+  today(), @"08:00:00@Europe/Berlin"
+) - now()</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:startEvent id="StartEvent_1" name="Every weekday">
+      <bpmn:outgoing>Flow_1jx7apz</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1o7ysvi">
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">0 0 0 * * MON-FRI</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1jx7apz" sourceRef="StartEvent_1" targetRef="Event_0ege2pe" />
+    <bpmn:serviceTask id="Activity_0075mke" name="Fetch pending reviews" zeebe:modelerTemplate="io.camunda.connectors.HttpJson.v2" zeebe:modelerTemplateIcon="data:image/svg+xml;utf8,%3Csvg%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2018%2018%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M17.0335%208.99997C17.0335%2013.4475%2013.4281%2017.0529%208.98065%2017.0529C4.53316%2017.0529%200.927765%2013.4475%200.927765%208.99997C0.927765%204.55248%204.53316%200.947083%208.98065%200.947083C13.4281%200.947083%2017.0335%204.55248%2017.0335%208.99997Z%22%20fill%3D%22%23505562%22%2F%3E%0A%3Cpath%20d%3D%22M4.93126%2014.1571L6.78106%203.71471H10.1375C11.1917%203.71471%2011.9824%203.98323%2012.5095%204.52027C13.0465%205.04736%2013.315%205.73358%2013.315%206.57892C13.315%207.44414%2013.0714%208.15522%2012.5841%208.71215C12.1067%209.25913%2011.4553%209.63705%2010.6298%209.8459L12.0619%2014.1571H10.3315L9.03364%2010.0249H7.24351L6.51254%2014.1571H4.93126ZM7.49711%208.59281H9.24248C9.99832%208.59281%2010.5901%208.42374%2011.0177%208.08561C11.4553%207.73753%2011.6741%207.26513%2011.6741%206.66842C11.6741%206.19106%2011.5249%205.81811%2011.2265%205.54959C10.9282%205.27113%2010.4558%205.1319%209.80936%205.1319H8.10874L7.49711%208.59281Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E%0A">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="io.camunda:http-json:1" />
+        <zeebe:ioMapping>
+          <zeebe:input source="bearer" target="authentication.type" />
+          <zeebe:input source="get" target="method" />
+          <zeebe:input source="https://api.github.com/search/issues" target="url" />
+          <zeebe:input source="={&#10;  &#34;q&#34;: &#34;is:open is:pr review-requested:saig0 archived:false &#34;&#10;  }" target="queryParameters" />
+          <zeebe:input source="={&#10;  &#34;Accept&#34;:&#34;application/vnd.github+json&#34;&#10;}" target="headers" />
+          <zeebe:input source="secrets.GITHUB_TOKEN" target="authentication.token" />
+          <zeebe:input source="20" target="connectionTimeoutInSeconds" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="resultVariable" value="github_response" />
+          <zeebe:header key="resultExpression" value="={pull_requests: &#10; for item &#10; in response.body.items[not(draft)] &#10; return {&#10;   url: item.html_url,&#10;   title: item.title,&#10;   created_at: item.created_at,&#10;   repository: substring after(&#10;     item.repository_url, &#34;repos/&#34;),&#10;   is_bot: item.user.type = &#34;Bot&#34; &#10;  }&#10; }" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0qw5grx</bpmn:incoming>
+      <bpmn:outgoing>Flow_1bpite4</bpmn:outgoing>
+      <bpmn:property id="Property_0ew59hd" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_0clu4rt">
+        <bpmn:sourceRef>DataObjectReference_17zeg1r</bpmn:sourceRef>
+        <bpmn:targetRef>Property_0ew59hd</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1he05ge">
+        <bpmn:targetRef>DataObjectReference_1nvpdxp</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_168j10l" name="Has reviews?" default="Flow_0xwlifn">
+      <bpmn:incoming>Flow_1bpite4</bpmn:incoming>
+      <bpmn:outgoing>Flow_0e43t0e</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0xwlifn</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_1bpite4" sourceRef="Activity_0075mke" targetRef="Gateway_168j10l" />
+    <bpmn:sequenceFlow id="Flow_0e43t0e" name="yes" sourceRef="Gateway_168j10l" targetRef="Activity_1e291py">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=count(pull_requests) &gt;= 1</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:businessRuleTask id="Activity_1e291py" name="Prioritize reviews">
+      <bpmn:extensionElements>
+        <zeebe:calledDecision decisionId="review_priority" resultVariable="review_priority" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=null" target="review_priority" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0e43t0e</bpmn:incoming>
+      <bpmn:outgoing>Flow_07o4pre</bpmn:outgoing>
+      <bpmn:property id="Property_16yo6it" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_1b84obf">
+        <bpmn:sourceRef>DataObjectReference_1nvpdxp</bpmn:sourceRef>
+        <bpmn:targetRef>Property_16yo6it</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_03aoz4a">
+        <bpmn:targetRef>DataObjectReference_0jwmrcb</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+      <bpmn:multiInstanceLoopCharacteristics>
+        <bpmn:extensionElements>
+          <zeebe:loopCharacteristics inputCollection="=pull_requests" inputElement="pull_request" outputCollection="prioritized_pull_requests" outputElement="={&#10;  pull_request: pull_request,&#10;  priority: review_priority&#10;}" />
+        </bpmn:extensionElements>
+      </bpmn:multiInstanceLoopCharacteristics>
+    </bpmn:businessRuleTask>
+    <bpmn:sequenceFlow id="Flow_07o4pre" sourceRef="Activity_1e291py" targetRef="Activity_0ti401e" />
+    <bpmn:scriptTask id="Activity_0ti401e" name="Select top 3 reviews">
+      <bpmn:documentation>sublist(sort(prioritiezed_pull_requests, function (x,y) x.priority &lt; y.priority), 1, 3)</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:script expression="={&#10;  sorted: sort(&#10;    prioritized_pull_requests, &#10;    function (x,y) &#10;      x.priority &#60; y.priority),&#10;  top_3: sublist(sorted, 1, 3)&#10;}.top_3.pull_request" resultVariable="selected_pull_requests" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_07o4pre</bpmn:incoming>
+      <bpmn:outgoing>Flow_0vjimc2</bpmn:outgoing>
+      <bpmn:property id="Property_1gxgnvn" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_1qcplvp">
+        <bpmn:sourceRef>DataObjectReference_0jwmrcb</bpmn:sourceRef>
+        <bpmn:targetRef>Property_1gxgnvn</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1phcqfx">
+        <bpmn:targetRef>DataObjectReference_16cwrfr</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+    </bpmn:scriptTask>
+    <bpmn:subProcess id="Activity_1nqmscz">
+      <bpmn:extensionElements>
+        <zeebe:ioMapping>
+          <zeebe:input source="=now() - date and time(pull_request.created_at)" target="age" />
+          <zeebe:input source="=if age &#60; @&#34;P1D&#34; then &#34;today&#34; else &#10;  if age &#60; @&#34;P2D&#34; then &#34;yesterday&#34; else &#10;    string(age.days) + &#34; days ago.&#34;" target="age_formatted" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0vjimc2</bpmn:incoming>
+      <bpmn:outgoing>Flow_02laret</bpmn:outgoing>
+      <bpmn:property id="Property_1qnkjp4" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_0nzid86">
+        <bpmn:sourceRef>DataObjectReference_16cwrfr</bpmn:sourceRef>
+        <bpmn:targetRef>Property_1qnkjp4</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+      <bpmn:multiInstanceLoopCharacteristics>
+        <bpmn:extensionElements>
+          <zeebe:loopCharacteristics inputCollection="=selected_pull_requests" inputElement="pull_request" />
+        </bpmn:extensionElements>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Event_1dcbccq">
+        <bpmn:outgoing>Flow_1l2uxac</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:serviceTask id="Activity_0v0zrf4" name="Notify about pending review" zeebe:modelerTemplate="io.camunda.connectors.Slack.v1" zeebe:modelerTemplateIcon="data:image/svg+xml;utf8,%3Csvg%20width%3D%2218%22%20height%3D%2218%22%20%20viewBox%3D%220%200%20127%20127%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%20%20%3Cpath%20d%3D%22M27.2%2080c0%207.3-5.9%2013.2-13.2%2013.2C6.7%2093.2.8%2087.3.8%2080c0-7.3%205.9-13.2%2013.2-13.2h13.2V80zm6.6%200c0-7.3%205.9-13.2%2013.2-13.2%207.3%200%2013.2%205.9%2013.2%2013.2v33c0%207.3-5.9%2013.2-13.2%2013.2-7.3%200-13.2-5.9-13.2-13.2V80z%22%20fill%3D%22%23E01E5A%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M47%2027c-7.3%200-13.2-5.9-13.2-13.2C33.8%206.5%2039.7.6%2047%20.6c7.3%200%2013.2%205.9%2013.2%2013.2V27H47zm0%206.7c7.3%200%2013.2%205.9%2013.2%2013.2%200%207.3-5.9%2013.2-13.2%2013.2H13.9C6.6%2060.1.7%2054.2.7%2046.9c0-7.3%205.9-13.2%2013.2-13.2H47z%22%20fill%3D%22%2336C5F0%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M99.9%2046.9c0-7.3%205.9-13.2%2013.2-13.2%207.3%200%2013.2%205.9%2013.2%2013.2%200%207.3-5.9%2013.2-13.2%2013.2H99.9V46.9zm-6.6%200c0%207.3-5.9%2013.2-13.2%2013.2-7.3%200-13.2-5.9-13.2-13.2V13.8C66.9%206.5%2072.8.6%2080.1.6c7.3%200%2013.2%205.9%2013.2%2013.2v33.1z%22%20fill%3D%22%232EB67D%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M80.1%2099.8c7.3%200%2013.2%205.9%2013.2%2013.2%200%207.3-5.9%2013.2-13.2%2013.2-7.3%200-13.2-5.9-13.2-13.2V99.8h13.2zm0-6.6c-7.3%200-13.2-5.9-13.2-13.2%200-7.3%205.9-13.2%2013.2-13.2h33.1c7.3%200%2013.2%205.9%2013.2%2013.2%200%207.3-5.9%2013.2-13.2%2013.2H80.1z%22%20fill%3D%22%23ECB22E%22%2F%3E%0A%3C%2Fsvg%3E%0A">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="io.camunda:slack:1" />
+          <zeebe:ioMapping>
+            <zeebe:input source="chat.postMessage" target="method" />
+            <zeebe:input source="secrets.SLACK_TOKEN" target="token" />
+            <zeebe:input source="=&#34;{{secrets.SLACK_CHANNEL}}&#34;" target="data.channel" />
+            <zeebe:input source="= &#34;Hi. :wave: There is a PR `&#34; + pull_request.title + &#34;` waiting for your review. :eyes: (opened &#34; + age_formatted + &#34;) Check it out: &#34; + pull_request.url" target="data.text" />
+          </zeebe:ioMapping>
+          <zeebe:taskHeaders />
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1l2uxac</bpmn:incoming>
+        <bpmn:outgoing>Flow_0z5t1tb</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="Event_1cqcfkq">
+        <bpmn:incoming>Flow_0z5t1tb</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1l2uxac" sourceRef="Event_1dcbccq" targetRef="Activity_0v0zrf4" />
+      <bpmn:sequenceFlow id="Flow_0z5t1tb" sourceRef="Activity_0v0zrf4" targetRef="Event_1cqcfkq" />
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_0vjimc2" sourceRef="Activity_0ti401e" targetRef="Activity_1nqmscz" />
+    <bpmn:sequenceFlow id="Flow_0xwlifn" name="no pending reviews" sourceRef="Gateway_168j10l" targetRef="Activity_169jbop" />
+    <bpmn:endEvent id="Event_01zepn1" name="Free time">
+      <bpmn:incoming>Flow_0a7k7oi</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0a7k7oi" sourceRef="Activity_169jbop" targetRef="Event_01zepn1" />
+    <bpmn:endEvent id="Event_0g7pjzi" name="Done">
+      <bpmn:incoming>Flow_02laret</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_02laret" sourceRef="Activity_1nqmscz" targetRef="Event_0g7pjzi" />
+    <bpmn:serviceTask id="Activity_169jbop" name="Notify about free time" zeebe:modelerTemplate="io.camunda.connectors.Slack.v1" zeebe:modelerTemplateIcon="data:image/svg+xml;utf8,%3Csvg%20width%3D%2218%22%20height%3D%2218%22%20%20viewBox%3D%220%200%20127%20127%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%20%20%3Cpath%20d%3D%22M27.2%2080c0%207.3-5.9%2013.2-13.2%2013.2C6.7%2093.2.8%2087.3.8%2080c0-7.3%205.9-13.2%2013.2-13.2h13.2V80zm6.6%200c0-7.3%205.9-13.2%2013.2-13.2%207.3%200%2013.2%205.9%2013.2%2013.2v33c0%207.3-5.9%2013.2-13.2%2013.2-7.3%200-13.2-5.9-13.2-13.2V80z%22%20fill%3D%22%23E01E5A%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M47%2027c-7.3%200-13.2-5.9-13.2-13.2C33.8%206.5%2039.7.6%2047%20.6c7.3%200%2013.2%205.9%2013.2%2013.2V27H47zm0%206.7c7.3%200%2013.2%205.9%2013.2%2013.2%200%207.3-5.9%2013.2-13.2%2013.2H13.9C6.6%2060.1.7%2054.2.7%2046.9c0-7.3%205.9-13.2%2013.2-13.2H47z%22%20fill%3D%22%2336C5F0%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M99.9%2046.9c0-7.3%205.9-13.2%2013.2-13.2%207.3%200%2013.2%205.9%2013.2%2013.2%200%207.3-5.9%2013.2-13.2%2013.2H99.9V46.9zm-6.6%200c0%207.3-5.9%2013.2-13.2%2013.2-7.3%200-13.2-5.9-13.2-13.2V13.8C66.9%206.5%2072.8.6%2080.1.6c7.3%200%2013.2%205.9%2013.2%2013.2v33.1z%22%20fill%3D%22%232EB67D%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M80.1%2099.8c7.3%200%2013.2%205.9%2013.2%2013.2%200%207.3-5.9%2013.2-13.2%2013.2-7.3%200-13.2-5.9-13.2-13.2V99.8h13.2zm0-6.6c-7.3%200-13.2-5.9-13.2-13.2%200-7.3%205.9-13.2%2013.2-13.2h33.1c7.3%200%2013.2%205.9%2013.2%2013.2%200%207.3-5.9%2013.2-13.2%2013.2H80.1z%22%20fill%3D%22%23ECB22E%22%2F%3E%0A%3C%2Fsvg%3E%0A">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="io.camunda:slack:1" />
+        <zeebe:ioMapping>
+          <zeebe:input source="chat.postMessage" target="method" />
+          <zeebe:input source="secrets.SLACK_TOKEN" target="token" />
+          <zeebe:input source="=&#34;{{secrets.SLACK_CHANNEL}}&#34;" target="data.channel" />
+          <zeebe:input source="Hi. :wave: You don&#39;t have any pending reviews today. :tada: Enjoy your time. :desert_island:" target="data.text" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0xwlifn</bpmn:incoming>
+      <bpmn:outgoing>Flow_0a7k7oi</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0qw5grx" sourceRef="Event_0ege2pe" targetRef="Activity_0075mke" />
+    <bpmn:dataObjectReference id="DataObjectReference_16cwrfr" name="selected pull requests" dataObjectRef="DataObject_0ekoo9s" />
+    <bpmn:dataObject id="DataObject_0ekoo9s" />
+    <bpmn:dataObjectReference id="DataObjectReference_0jwmrcb" name="prioritized pull requests" dataObjectRef="DataObject_0p546bk" />
+    <bpmn:dataObject id="DataObject_0p546bk" />
+    <bpmn:dataObjectReference id="DataObjectReference_1nvpdxp" name="pull requests" dataObjectRef="DataObject_0y5gyvt" />
+    <bpmn:dataObject id="DataObject_0y5gyvt" />
+    <bpmn:dataObjectReference id="DataObjectReference_17zeg1r" name="GitHub PRs" dataObjectRef="DataObject_0qu914h" />
+    <bpmn:dataObject id="DataObject_0qu914h" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="daily-review-process">
+      <bpmndi:BPMNShape id="Event_1yxljci_di" bpmnElement="Event_0ege2pe">
+        <dc:Bounds x="262" y="242" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="266" y="285" width="28" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1jr8t6f_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="180" y="242" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="160" y="285" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1gb2h0b" bpmnElement="Activity_0075mke">
+        <dc:Bounds x="330" y="220" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_168j10l_di" bpmnElement="Gateway_168j10l" isMarkerVisible="true">
+        <dc:Bounds x="455" y="235" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="446" y="295" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_15eylu7_di" bpmnElement="Activity_1e291py">
+        <dc:Bounds x="550" y="220" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0smtn8b_di" bpmnElement="Activity_0ti401e">
+        <dc:Bounds x="680" y="220" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1xegabx" bpmnElement="Activity_1nqmscz" isExpanded="true">
+        <dc:Bounds x="810" y="190" width="256" height="140" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1r4ov4p" bpmnElement="Event_1dcbccq">
+        <dc:Bounds x="830" y="242" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1prgazx" bpmnElement="Activity_0v0zrf4">
+        <dc:Bounds x="888" y="220" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0h6y2mq" bpmnElement="Event_1cqcfkq">
+        <dc:Bounds x="1010" y="242" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_03927sh" bpmnElement="Flow_1l2uxac">
+        <di:waypoint x="866" y="260" />
+        <di:waypoint x="888" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0ql6k0v" bpmnElement="Flow_0z5t1tb">
+        <di:waypoint x="988" y="260" />
+        <di:waypoint x="1010" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_01zepn1_di" bpmnElement="Event_01zepn1">
+        <dc:Bounds x="1088" y="92" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1083" y="135" width="47" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0g7pjzi_di" bpmnElement="Event_0g7pjzi">
+        <dc:Bounds x="1088" y="242" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1093" y="285" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1pc4zd8_di" bpmnElement="Activity_169jbop">
+        <dc:Bounds x="888" y="70" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_16cwrfr_di" bpmnElement="DataObjectReference_16cwrfr">
+        <dc:Bounds x="822" y="365" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="810" y="422" width="62" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_0jwmrcb_di" bpmnElement="DataObjectReference_0jwmrcb">
+        <dc:Bounds x="652" y="365" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="637" y="422" width="68" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_1nvpdxp_di" bpmnElement="DataObjectReference_1nvpdxp">
+        <dc:Bounds x="472" y="365" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="459" y="422" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_17zeg1r_di" bpmnElement="DataObjectReference_17zeg1r">
+        <dc:Bounds x="272" y="365" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="261" y="422" width="59" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1jx7apz_di" bpmnElement="Flow_1jx7apz">
+        <di:waypoint x="216" y="260" />
+        <di:waypoint x="262" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_0clu4rt_di" bpmnElement="DataInputAssociation_0clu4rt">
+        <di:waypoint x="308" y="390" />
+        <di:waypoint x="360" y="390" />
+        <di:waypoint x="360" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1he05ge_di" bpmnElement="DataOutputAssociation_1he05ge">
+        <di:waypoint x="400" y="300" />
+        <di:waypoint x="400" y="390" />
+        <di:waypoint x="472" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1bpite4_di" bpmnElement="Flow_1bpite4">
+        <di:waypoint x="430" y="260" />
+        <di:waypoint x="455" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0e43t0e_di" bpmnElement="Flow_0e43t0e">
+        <di:waypoint x="505" y="260" />
+        <di:waypoint x="550" y="260" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="519" y="242" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_1b84obf_di" bpmnElement="DataInputAssociation_1b84obf">
+        <di:waypoint x="508" y="390" />
+        <di:waypoint x="580" y="390" />
+        <di:waypoint x="580" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_03aoz4a_di" bpmnElement="DataOutputAssociation_03aoz4a">
+        <di:waypoint x="620" y="300" />
+        <di:waypoint x="620" y="390" />
+        <di:waypoint x="652" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07o4pre_di" bpmnElement="Flow_07o4pre">
+        <di:waypoint x="650" y="260" />
+        <di:waypoint x="680" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_1qcplvp_di" bpmnElement="DataInputAssociation_1qcplvp">
+        <di:waypoint x="688" y="390" />
+        <di:waypoint x="710" y="390" />
+        <di:waypoint x="710" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1phcqfx_di" bpmnElement="DataOutputAssociation_1phcqfx">
+        <di:waypoint x="750" y="300" />
+        <di:waypoint x="750" y="390" />
+        <di:waypoint x="822" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_0nzid86_di" bpmnElement="DataInputAssociation_0nzid86">
+        <di:waypoint x="858" y="390" />
+        <di:waypoint x="938" y="390" />
+        <di:waypoint x="938" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0vjimc2_di" bpmnElement="Flow_0vjimc2">
+        <di:waypoint x="780" y="260" />
+        <di:waypoint x="810" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xwlifn_di" bpmnElement="Flow_0xwlifn">
+        <di:waypoint x="480" y="235" />
+        <di:waypoint x="480" y="110" />
+        <di:waypoint x="888" y="110" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="497" y="83" width="55" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0a7k7oi_di" bpmnElement="Flow_0a7k7oi">
+        <di:waypoint x="988" y="110" />
+        <di:waypoint x="1088" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02laret_di" bpmnElement="Flow_02laret">
+        <di:waypoint x="1066" y="260" />
+        <di:waypoint x="1088" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qw5grx_di" bpmnElement="Flow_0qw5grx">
+        <di:waypoint x="298" y="260" />
+        <di:waypoint x="330" y="260" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
