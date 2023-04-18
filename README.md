@@ -8,7 +8,7 @@ Source: [BPMN XML](daily-review-process.bpmn)
 
 ![The daily review process](assets/daily-review-process.png)
 
-## Review priority
+## Review priority decision
 
 Source: [DMN XML](review-priority.dmn)
 
