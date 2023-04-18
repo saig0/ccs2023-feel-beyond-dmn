@@ -1,2 +1,3 @@
-# ccs2023-feel-beyond-dmn
-Resources for the talk: CCS 2023 FEEL Beyond DMN 
+# CCS 2023 - FEEL Beyond DMN
+
+This repository contains the resources for the CCS 2023 talk: FEEL Beyond DMN.
